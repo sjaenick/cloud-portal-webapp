@@ -17,6 +17,16 @@ $deNBI_black: #000000;
 $openstackcolour: #ED1944;
 $simplevmcolour: #00ADEF;
 
+//choose extension type cards
+
+.choosecard:hover{
+  border-color: $deNBI_cyan;
+  cursor: pointer;
+}
+
+// ---
+
+
 .navbar-brand-full
 {
   bottom:8px;
