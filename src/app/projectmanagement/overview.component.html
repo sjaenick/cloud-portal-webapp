@@ -595,7 +595,7 @@
 </div><!-- /.modal -->
 
 
-<div bsModal id="chooseModal" #chooseModal="bs-modal" class="modal fade" tabindex="-1" role="dialog"
+<div bsModal #chooseModal="bs-modal" class="modal fade" tabindex="-1" role="dialog"
      aria-labelledby="Label"
      aria-hidden="true">
   <div class="modal-dialog modal-lg" role="document">
@@ -611,21 +611,21 @@
         <div class="row">
           <div class="col-sm-6 col-md-4">
 
-            <div class="card choosecard" id="choosecard-lifetime" style="height:170px !important;" (click)="lifetimeModal.show(); chooseModal.hide()">
+            <div class="card choosecard" id="choosecard-lifetime" style="height:170px !important;" (click)="chooseModal.hide();lifetimeModal.show();">
               <div class="card-header">Lifetime extension</div>
               <div class="card-body">You only want to extend the lifetime of your project and you don't need additional resources.</div>
             </div>
           </div>
 
           <div class="col-sm-6 col-md-4">
-            <div class="card choosecard" id="choosecard-resources" style="height:170px !important;"(click)="newFlavors= {}; initRamCores(); resourcesModal.show(); chooseModal.hide()">
+            <div class="card choosecard" id="choosecard-resources" style="height:170px !important;"(click)="newFlavors= {}; initRamCores(); chooseModal.hide(); resourcesModal.show();">
               <div class="card-header">Change resources</div>
               <div class="card-body">You only want to change or add additional resources to your project.</div>
             </div>
           </div>
 
           <div class="col-sm-6 col-md-4">
-            <div class="card choosecard" id="choosecard-both" style="height:170px !important;" (click)="newFlavors= {};initRamCores();  bothModal.show(); chooseModal.hide()">
+            <div class="card choosecard" id="choosecard-both" style="height:170px !important;" (click)="newFlavors= {};initRamCores();  chooseModal.hide(); bothModal.show();">
               <div class="card-header">Lifetime + Resources</div>
               <div class="card-body">You want to extend the lifetime and the resources of your project.</div>
             </div>
@@ -702,7 +702,7 @@
 
 
 
-<div bsModal #resourcesModal="bs-modal" class="modal fade" tabindex="-1" role="dialog"
+<div bsModal #resourcesModal="bs-modal" class="modal fade" tabindex="1" role="dialog"
      aria-labelledby="Label"
      aria-hidden="true">
   <div class="modal-dialog modal-lg" role="document">
@@ -987,7 +987,7 @@
 </div>
 
 
-<div bsModal #bothModal="bs-modal" class="modal fade" tabindex="-1" role="dialog"
+<div bsModal #bothModal="bs-modal" class="modal fade" tabindex="1" role="dialog"
      aria-labelledby="Label"
      aria-hidden="true">
   <div class="modal-dialog modal-lg" role="document">

@@ -17,6 +17,12 @@ $deNBI_black: #000000;
 $openstackcolour: #ED1944;
 $simplevmcolour: #00ADEF;
 
+//for modals in general
+
+.modal {
+  overflow-y: auto;
+}
+
 //choose extension type cards
 
 .choosecard:hover{
