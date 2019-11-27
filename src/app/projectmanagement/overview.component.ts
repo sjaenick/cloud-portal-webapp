@@ -1,4 +1,4 @@
-import {Component, ElementRef, Input, OnInit} from '@angular/core';
+import {Component, ElementRef, Input, OnInit, ViewChild} from '@angular/core';
 import {Project} from './project.model';
 import {ProjectMember} from './project_member.model'
 import {environment} from '../../environments/environment'
@@ -13,7 +13,7 @@ import {Userinfo} from '../userinfo/userinfo.model';
 import {forkJoin, Observable} from 'rxjs';
 import {ActivatedRoute} from '@angular/router';
 import {Application} from '../applications/application.model/application.model';
-import {ApplicationBaseClass} from '../shared/shared_modules/baseClass/application-base-class';
+import {ApplicationBaseClassComponent} from '../shared/shared_modules/baseClass/application-base-class.component';
 import {ApplicationStatusService} from '../api-connector/application-status.service';
 import {FacilityService} from '../api-connector/facility.service';
 import {ApplicationsService} from '../api-connector/applications.service';
@@ -23,6 +23,8 @@ import {NgForm} from '@angular/forms';
 import {Flavor} from '../virtualmachines/virtualmachinemodels/flavor';
 import {FlavorType} from '../virtualmachines/virtualmachinemodels/flavorType';
 import {FlavorService} from '../api-connector/flavor.service';
+import {IResponseTemplate} from '../api-connector/response-template';
+import {CreditsService} from '../api-connector/credits.service';
 
 /**
  * Projectoverview component.
@@ -31,19 +33,28 @@ import {FlavorService} from '../api-connector/flavor.service';
              selector: 'app-project-overview',
              templateUrl: 'overview.component.html',
              providers: [FlavorService, ApplicationStatusService, ApplicationsService,
-               FacilityService, VoService, UserService, GroupService, ApiSettings]
+               FacilityService, VoService, UserService, GroupService, ApiSettings, VoService, CreditsService]
            })
-export class OverviewComponent extends ApplicationBaseClass implements OnInit {
+export class OverviewComponent extends ApplicationBaseClassComponent implements OnInit {
 
   @Input() invitation_group_post: string = environment.invitation_group_post;
   @Input() voRegistrationLink: string = environment.voRegistrationLink;
   @Input() invitation_group_pre: string = environment.invitation_group_pre;
   @Input() wiki_group_invitation: string = environment.wiki_group_invitations;
 
+  @ViewChild(NgForm) simpleVmForm: NgForm;
+
+  /**
+   * If at least 1 flavor is selected.
+   * @type {boolean}
+   */
+  public min_vm: boolean = true;
+
   project_id: string;
   application_id: string;
   project: Project;
   application_details_visible: boolean = false;
+  credits: number = 0;
 
   /**
    * id of the extension status.
@@ -85,7 +96,8 @@ export class OverviewComponent extends ApplicationBaseClass implements OnInit {
               userservice: UserService,
               private activatedRoute: ActivatedRoute,
               private fullLayout: FullLayoutComponent,
-              private router: Router) {
+              private router: Router,
+              private voservice: VoService, private creditsService: CreditsService) {
     super(userservice, applicationstatusservice, applicationsservice, facilityService);
   }
 
@@ -122,7 +134,7 @@ export class OverviewComponent extends ApplicationBaseClass implements OnInit {
       if (this.project_application) {
         this.setLifetime();
 
-        this.applicationsservice.getApplicationPerunId(this.application_id).subscribe(id => {
+        this.applicationsservice.getApplicationPerunId(this.application_id).subscribe((id: any) => {
           if (id['perun_id']) {
             this.project_id = id['perun_id'];
 
@@ -147,11 +159,10 @@ export class OverviewComponent extends ApplicationBaseClass implements OnInit {
     for (const key in this.project_application.CurrentFlavors) {
       const flavor: any = this.project_application.CurrentFlavors[key];
       if (flavor != null) {
-        const flav: Flavor = this.flavorList.find(function (fl: Flavor) {
+        const flav: Flavor = this.flavorList.find(function (fl: Flavor): boolean {
           return fl.name === key;
 
-        })
-        console.log(flav);
+        });
         this.newFlavors[key] = {counter: flavor.counter, flavor: flav};
         this.calculateRamCores()
 
@@ -178,7 +189,19 @@ export class OverviewComponent extends ApplicationBaseClass implements OnInit {
     values['project_application_id'] = this.project_application.Id;
     values['total_cores_new'] = this.totalNumberOfCores;
     values['total_ram_new'] = this.totalRAM;
+    values['project_application_renewal_credits'] = this.credits;
+
     this.requestExtension(values);
+
+  }
+
+  /**
+   * Sends a request to the BE to get the initital credits for a new application.
+   */
+  calculateInitialCredits(form: NgForm): void {
+
+    /*todo calculate */
+    this.credits = 0;
 
   }
 
@@ -233,7 +256,7 @@ export class OverviewComponent extends ApplicationBaseClass implements OnInit {
     let date1: Date = new Date(Number(approval.substring(0, 4)), Number(approval.substring(5, 7)) - 1, Number(approval.substring(8)));
     const month: number = date1.getMonth();
     if ((month + months) > 11) {
-      date1 = new Date(date1.getFullYear(), (month + months - 12), date1.getDate());
+      date1 = new Date(date1.getFullYear() + 1, (month + months - 12), date1.getDate());
     } else {
       date1.setMonth(date1.getMonth() + months);
     }
@@ -243,7 +266,8 @@ export class OverviewComponent extends ApplicationBaseClass implements OnInit {
 
   setLifetime(): void {
 
-    this.life_time_string = `${this.project_application.DateApproved} - ${this.getEndDate(this.project_application.Lifetime, this.project_application.DateApproved)}`;
+    // tslint:disable-next-line:max-line-length
+    this.life_time_string = `${this.project_application.DateApproved} -  ${this.getEndDate(this.project_application.Lifetime, this.project_application.DateApproved)}`;
 
   }
 
@@ -256,7 +280,7 @@ export class OverviewComponent extends ApplicationBaseClass implements OnInit {
 
   ngOnInit(): void {
 
-    this.activatedRoute.params.subscribe(paramsId => {
+    this.activatedRoute.params.subscribe((paramsId: any) => {
       this.isLoaded = false;
       this.project = null;
       this.project_application = null;
@@ -267,6 +291,7 @@ export class OverviewComponent extends ApplicationBaseClass implements OnInit {
       this.getUserinfo();
       this.getListOfFlavors();
       this.getListOfTypes();
+      this.checkVOstatus();
 
     });
 
@@ -278,7 +303,8 @@ export class OverviewComponent extends ApplicationBaseClass implements OnInit {
    */
   getFacilityProject(): void {
 
-    if (!this.project_application.ComputeCenter && this.project_application.Status !== this.application_states.SUBMITTED && this.project_application.Status !== this.application_states.TERMINATED) {
+    if (!this.project_application.ComputeCenter && this.project_application.Status !== this.application_states.SUBMITTED
+      && this.project_application.Status !== this.application_states.TERMINATED) {
       this.groupService.getFacilityByGroup(this.project_application.PerunId.toString()).subscribe((res: object) => {
 
         const login: string = res['Login'];
@@ -365,6 +391,8 @@ export class OverviewComponent extends ApplicationBaseClass implements OnInit {
       const groupid: string = group['id'];
       const facility: any = group['compute_center'];
       const shortname: string = group['shortname'];
+      const currentCredits: number = Number(group['current_credits']);
+      const approvedCredits: number = Number(group['approved_credits']);
 
       const realname: string = group['name'];
       let compute_center: ComputecenterComponent = null;
@@ -383,7 +411,9 @@ export class OverviewComponent extends ApplicationBaseClass implements OnInit {
         dateDayDifference,
         is_pi,
         this.isAdmin,
-        compute_center);
+        compute_center,
+        currentCredits,
+        approvedCredits);
       const lifetime: number | string = <number>group['lifetime'];
       if (lifetime !== -1) {
         const expirationDate: string = moment(moment(dateCreated).add(lifetime, 'months').toDate()).format('DD.MM.YYYY');
@@ -438,7 +468,8 @@ export class OverviewComponent extends ApplicationBaseClass implements OnInit {
   setAllMembersChecked(): void {
     if (!this.allSet) {
       this.project_members.forEach((member: ProjectMember) => {
-        if (!this.isMemberChecked(parseInt(member.MemberId.toString(), 10)) && this.userinfo.MemberId.toString() !== member.MemberId.toString()) {
+        if (!this.isMemberChecked(parseInt(member.MemberId.toString(), 10))
+          && this.userinfo.MemberId.toString() !== member.MemberId.toString()) {
           this.checked_member_list.push(parseInt(member.MemberId.toString(), 10));
         }
       });
@@ -515,6 +546,38 @@ export class OverviewComponent extends ApplicationBaseClass implements OnInit {
   setAddUserInvitationLink(): void {
     const uri: string = this.invitation_group_pre + this.project.RealName + this.invitation_group_post + this.project.RealName;
     this.invitation_link = uri;
+
+  }
+
+  /**
+   * Uses the data from the application form to fill the confirmation-modal with information.
+   * @param form the application form with corresponding data
+   */
+  filterEnteredData(form: NgForm): void {
+    this.generateConstants();
+    this.valuesToConfirm = [];
+    for (const key in form.controls) {
+      if (form.controls[key].value) {
+        if (key === 'project_application_name') {
+          this.projectName = form.controls[key].value;
+          if (this.projectName.length > 50) {
+            this.projectName = `${this.projectName.substring(0, 50)}...`;
+          }
+        }
+        if (key in this.constantStrings) {
+          if (form.controls[key].disabled) {
+            continue;
+          }
+
+          this.valuesToConfirm.push(this.matchString(key.toString(), form.controls[key].value.toString()));
+
+        }
+      }
+
+    }
+    if (!this.project_application_report_allowed) {
+      this.valuesToConfirm.push('Dissemination allowed: No');
+    }
 
   }
 
@@ -680,6 +743,18 @@ export class OverviewComponent extends ApplicationBaseClass implements OnInit {
       });
   }
 
+  checkIfTypeGotSimpleVmFlavor(type: FlavorType): boolean {
+    for (const flav of this.flavorList) {
+      if (flav.type.shortcut === type.shortcut && flav.simple_vm) {
+        return true
+      }
+
+    }
+
+    return false
+
+  }
+
   /**
    * Delete an application.
    * @param application_id
@@ -689,6 +764,7 @@ export class OverviewComponent extends ApplicationBaseClass implements OnInit {
       () => {
         this.updateNotificationModal('Success', 'The application has been successfully removed', true, 'success');
         this.fullLayout.getGroupsEnumeration();
+        // tslint:disable:no-floating-promises
         this.router.navigate(['/userinfo'])
       },
       () => {
@@ -699,5 +775,37 @@ export class OverviewComponent extends ApplicationBaseClass implements OnInit {
 
   public comingSoon(): void {
     alert('This function will be implemented soon.')
+  }
+
+  onChangeFlavor(value: number): void {
+
+    this.checkIfMinVmIsSelected();
+  }
+
+  checkIfMinVmIsSelected(): void {
+    let nr_vm: number = 0;
+    for (const fl of this.flavorList) {
+      const control: string = `project_application_renewal_${fl.name}`;
+      if (control in this.simpleVmForm.controls) {
+        if (this.simpleVmForm.controls[control].value > 0) {
+          nr_vm += this.simpleVmForm.controls[control].value;
+        }
+      }
+    }
+    if (nr_vm > 0 || this.project_application.OpenStackProject) {
+      this.min_vm = true;
+    } else if (nr_vm === 0) {
+      this.min_vm = false;
+    }
+  }
+
+  /**
+   * Check vm status.
+   * @param {UserService} userservice
+   */
+  checkVOstatus(): void {
+    this.voservice.isVo().subscribe((result: IResponseTemplate) => {
+      this.is_vo_admin = <boolean><Boolean>result.value;
+    })
   }
 }

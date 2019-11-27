@@ -1,5 +1,6 @@
 import {ApplicationExtension} from '../application_extension.model';
 import {ComputecenterComponent} from '../../projectmanagement/computecenter.component';
+import {Dissemination} from './dissemination';
 
 /**
  * Application class.
@@ -35,18 +36,20 @@ export class Application {
   private _PerunId: number | string;
   private _TotalCores: number;
   private _TotalRam: number;
+  private _InitialCredits: number;
   private _DateApproved: string;
   private _Horizon2020: string;
   private _BMBFProject: string;
   private _EdamTopics: string[];
+  private _SensitiveData: boolean;
 
   private _ElixirProject: string;
-  private _Dissemination: boolean;
+  private _Dissemination: Dissemination;
   private _PIApproved: boolean;
   private _PI: string;
   private _PIElixir: string;
   private _PIEmail: string;
-  //todo own type!!!!!!!!!!!!
+  // todo own type!!!!!!!!!!!!
   private _CurrentFlavors: {
     [id: string]: {
       counter: number, tag: string, ram: number, rootdisk: number,
@@ -69,6 +72,14 @@ export class Application {
       gpu: gpu,
       epheremal_disk: epheremal_disk
     };
+  }
+
+  get SensitiveData(): boolean {
+    return this._SensitiveData;
+  }
+
+  set SensitiveData(value: boolean) {
+    this._SensitiveData = value;
   }
 
   get PiAffiliations(): string[] {
@@ -95,11 +106,11 @@ export class Application {
     this._PIElixir = value;
   }
 
-  get Dissemination(): boolean {
+  get Dissemination(): Dissemination {
     return this._Dissemination;
   }
 
-  set Dissemination(value: boolean) {
+  set Dissemination(value: Dissemination) {
     this._Dissemination = value;
   }
 
@@ -399,5 +410,13 @@ export class Application {
 
   set PIEmail(value: string) {
     this._PIEmail = value;
+  }
+
+  get InitialCredits(): number {
+    return this._InitialCredits;
+  }
+
+  set InitialCredits(value: number) {
+    this._InitialCredits = value;
   }
 }

@@ -33,6 +33,11 @@ $simplevmcolour: #00ADEF;
   position: relative;
 }
 
+.instance-card{
+  margin: 10px;
+}
+
+
 .navbar-brand-minimized
 {
   left:5px;
@@ -53,6 +58,18 @@ $simplevmcolour: #00ADEF;
   top: 75px;
   margin: 15px;
 }
+
+.sidebar .nav .nav-item .nav-link {
+
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.sidebar .nav .nav-item {
+  width:100%;
+}
+
 
 .app-header .navbar-brand
 {

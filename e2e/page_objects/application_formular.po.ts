@@ -1,13 +1,16 @@
 import {browser, by, element, protractor, ProtractorExpectedConditions} from 'protractor';
 import {Util} from '../util';
 
+/**
+ * Page object for the Application requests.
+ */
 export class FormularPage {
   private static SUBMIT_BTN: string = 'submit_btn';
   private static VERIFICATION_BTN: string = 'verification_btn';
   private static ACKNOWLEDGE_BTN: string = 'acknowledge_approve_btn';
   private static APPLICATION_SUBMITTED: string = 'The application was submitted';
   private static NOTIFICATION_MESSAGE: string = 'notification_message';
-  private static EDAM_PLACEHOLDER: string = 'Please add your research topics';
+  public static NOTIFICATION_BTN_REDIRECT: string = 'notification_btn_redirect';
 
   static async submitApplication(): Promise<any> {
     console.log('Submit Application');
@@ -52,6 +55,7 @@ export class FormularPage {
     await Util.sendTextToElementByName('project_application_horizon2020', 'Horizon2020Project');
     await Util.sendTextToElementById('id_project_application_volume_limit', '2');
     await Util.clickElementById('id_project_application_report_allowed');
+    await Util.clickElementById('id_project_application_sensitive_data');
     await Util.sendTextToElementByName('information_public_title_input', 'A Public Title');
     await Util.clickElementById('public_description_enabled');
     await Util.sendTextToElementByName('information_description', 'A Public Description');
@@ -62,9 +66,7 @@ export class FormularPage {
     await Util.clickElementById('information_institution_checkbox');
     await Util.clickElementById('information_workgroup_checkbox');
     await Util.clickElementById('information_project_affiliation_checkbox');
-    await Util.clickElementById('platform_newsletter_checkbox');
-    await Util.clickElementById('platform_landing_page_checkbox');
-    await Util.clickElementById('platform_portal_news_checkbox');
+    await Util.clickElementById('platform_denbi_checkbox');
     await Util.clickElementById('platform_twitter_checkbox');
     await Util.clickElementById('project_application_pi_approved_checkbox');
     await Util.clickElementById('project_application_responsibility_checkbox');

@@ -6,7 +6,8 @@ import {ApiSettings} from '../api-connector/api-settings.service';
 import {Application} from '../applications/application.model/application.model';
 import {ApplicationStatusService} from '../api-connector/application-status.service';
 import {ApplicationsService} from '../api-connector/applications.service';
-import {ApplicationBaseClass} from '../shared/shared_modules/baseClass/application-base-class';
+import {ApplicationBaseClassComponent} from '../shared/shared_modules/baseClass/application-base-class.component';
+import {forkJoin} from 'rxjs';
 
 /**
  * Application component
@@ -19,7 +20,7 @@ import {ApplicationBaseClass} from '../shared/shared_modules/baseClass/applicati
                ApplicationsService, ApiSettings]
 
            })
-export class FacilityApplicationComponent extends ApplicationBaseClass implements OnInit {
+export class FacilityApplicationComponent extends ApplicationBaseClassComponent implements OnInit {
 
   title: string = 'Application Overview';
   /**
@@ -59,7 +60,7 @@ export class FacilityApplicationComponent extends ApplicationBaseClass implement
    */
   public approveExtension(app: Application): void {
 
-    this.applicationsservice.approveRenewal(app.Id).subscribe(result => {
+    this.applicationsservice.approveRenewal(app.Id).subscribe((result: any) => {
       if (result['Error']) {
         this.updateNotificationModal('Failed', 'Failed to approve the application modification.', true, 'danger');
       } else {
@@ -77,7 +78,7 @@ export class FacilityApplicationComponent extends ApplicationBaseClass implement
    */
   getAllApplicationsModifications(facility: number): void {
     this.isLoaded = false;
-    this.facilityService.getFacilityModificationApplicationsWaitingForConfirmation(facility).subscribe(res => {
+    this.facilityService.getFacilityModificationApplicationsWaitingForConfirmation(facility).subscribe((res: any) => {
       if (Object.keys(res).length === 0) {
         this.isLoaded = true;
       }
@@ -94,11 +95,10 @@ export class FacilityApplicationComponent extends ApplicationBaseClass implement
    * @param {number} facility id of the facility
    */
   getAllApplicationsHistory(facility: number): void {
-    this.isLoaded = false;
     this.applications_history = [];
 
     // todo check if user is VO Admin
-    this.facilityService.getFacilityApplicationsHistory(facility).subscribe(res => {
+    this.facilityService.getFacilityApplicationsHistory(facility).subscribe((res: any) => {
       if (Object.keys(res).length === 0) {
         this.isLoaded = true;
       }
@@ -108,6 +108,20 @@ export class FacilityApplicationComponent extends ApplicationBaseClass implement
     });
   }
 
+  getFullApplications(facility: number): void {
+    forkJoin(this.facilityService.getFacilityApplicationsWaitingForConfirmation(facility),
+             this.facilityService.getFacilityApplicationsHistory(facility),
+             this.facilityService.getFacilityModificationApplicationsWaitingForConfirmation(facility)).subscribe((res: any) => {
+      const newAppsWFC: Application [] = this.setNewApplications(res[0]);
+      this.all_applications_wfc.push.apply(this.all_applications_wfc, newAppsWFC);
+      const newAppsMod: Application [] = this.setNewApplications(res[2]);
+      this.all_application_modifications.push.apply(this.all_application_modifications, newAppsMod);
+      this.isLoaded = true;
+      const newAppsHistory: Application [] = this.setNewApplications(res[1]);
+      this.applications_history.push.apply(this.applications_history, newAppsHistory);
+    })
+  }
+
   /**
    * Gets all applications for the facility.
    * @param {number} facility
@@ -115,7 +129,7 @@ export class FacilityApplicationComponent extends ApplicationBaseClass implement
   getAllApplicationsWFC(facility: number): void {
 
     // todo check if user is VO Admin
-    this.facilityService.getFacilityApplicationsWaitingForConfirmation(facility).subscribe(res => {
+    this.facilityService.getFacilityApplicationsWaitingForConfirmation(facility).subscribe((res: any) => {
       if (Object.keys(res).length === 0) {
         this.isLoaded = true;
       }
@@ -130,17 +144,15 @@ export class FacilityApplicationComponent extends ApplicationBaseClass implement
    * Approves an  application.
    * @param {number} application_id
    */
-  approveApplication(application_id: number): void {
+  approveApplication(app: Application): void {
 
     this.updateNotificationModal('Approving Application', 'Waiting..', true, 'info');
-    this.facilityService.approveFacilityApplication(this.selectedFacility['FacilityId'], application_id).subscribe(
+    this.facilityService.approveFacilityApplication(this.selectedFacility['FacilityId'], app.Id).subscribe(
       () => {
         this.updateNotificationModal('Success', 'Successfully approved the application.', true, 'success');
+        this.all_applications_wfc.splice(this.all_applications_wfc.indexOf(app), 1);
 
-        this.all_applications_wfc = [];
         this.getAllApplicationsHistory(this.selectedFacility ['FacilityId']);
-
-        this.getAllApplicationsWFC(this.selectedFacility['FacilityId'])
       },
       () => {
         this.updateNotificationModal('Failed', 'Failed to approve the application.', true, 'danger');
@@ -190,21 +202,17 @@ export class FacilityApplicationComponent extends ApplicationBaseClass implement
     this.all_applications_wfc = [];
     this.all_application_modifications = [];
     this.applications_history = [];
-    this.getAllApplicationsWFC(this.selectedFacility['FacilityId']);
-    this.getAllApplicationsHistory(this.selectedFacility['FacilityId']);
-    this.getAllApplicationsModifications(this.selectedFacility['FacilityId']);
+    this.getFullApplications(this.selectedFacility ['FacilityId']);
+
   }
 
   ngOnInit(): void {
-    this.facilityService.getManagerFacilities().subscribe(result => {
+    this.facilityService.getManagerFacilities().subscribe((result: any) => {
       this.managerFacilities = result;
       this.selectedFacility = this.managerFacilities[0];
       this.facilityService.getFacilityResources(this.selectedFacility['FacilityId']).subscribe();
       this.getApplicationStatus();
-      this.getAllApplicationsWFC(this.selectedFacility ['FacilityId']);
-      this.getAllApplicationsModifications(this.selectedFacility ['FacilityId']);
-      this.getAllApplicationsHistory(this.selectedFacility ['FacilityId']);
-
+      this.getFullApplications(this.selectedFacility ['FacilityId']);
     })
   }
 

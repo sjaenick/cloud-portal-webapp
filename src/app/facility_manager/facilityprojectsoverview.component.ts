@@ -6,7 +6,6 @@ import {ApiSettings} from '../api-connector/api-settings.service';
 import {GroupService} from '../api-connector/group.service';
 import {UserService} from '../api-connector/user.service';
 import {FacilityService} from '../api-connector/facility.service';
-
 import * as moment from 'moment';
 import {ComputecenterComponent} from '../projectmanagement/computecenter.component';
 import {FilterBaseClass} from '../shared/shared_modules/baseClass/filter-base-class';
@@ -16,6 +15,7 @@ import {IResponseTemplate} from '../api-connector/response-template';
  * Facility Project overview component.
  */
 @Component({
+             selector: 'app-facility-projects',
              templateUrl: 'facilityprojectsoverview.component.html',
              providers: [FacilityService, UserService, GroupService, ApiSettings]
            })
@@ -48,6 +48,7 @@ export class FacilityProjectsOverviewComponent extends FilterBaseClass implement
   public emailText: string;
   public emailStatus: number = 0;
   public emailReply: string = '';
+  public sendNews: boolean;
 
   public managerFacilities: [string, number][];
   public selectedFacility: [string, number];
@@ -59,19 +60,20 @@ export class FacilityProjectsOverviewComponent extends FilterBaseClass implement
   }
 
   ngOnInit(): void {
-    this.facilityservice.getManagerFacilities().subscribe(result => {
+    this.facilityservice.getManagerFacilities().subscribe((result: any) => {
       this.managerFacilities = result;
       this.selectedFacility = this.managerFacilities[0];
       this.emailSubject = `[${this.selectedFacility['Facility']}]`;
 
       this.getFacilityProjects(this.managerFacilities[0]['FacilityId']);
-      this.title = this.title + ': ' + this.selectedFacility['Facility'];
+      this.title = `${this.title}:${this.selectedFacility['Facility']}`;
 
     })
+    this.sendNews = true;
   }
 
   applyFilter(): void {
-    this.projects_filtered = this.projects.filter(vm => this.checkFilter(vm));
+    this.projects_filtered = this.projects.filter((project: Project) => this.checkFilter(project));
   }
 
   checkFilter(project: Project): boolean {
@@ -134,15 +136,18 @@ export class FacilityProjectsOverviewComponent extends FilterBaseClass implement
   getFacilityProjects(facility: string): void {
     this.projects = [];
 
-    this.facilityservice.getFacilityAllowedGroupsWithDetailsAndSpecificStatus(facility, this.STATUS_APPROVED).subscribe(result => {
-      const facility_projects = result;
+    this.facilityservice.getFacilityAllowedGroupsWithDetailsAndSpecificStatus(facility, this.STATUS_APPROVED).subscribe((result: any) => {
+      const facility_projects: any = result;
       const is_pi: boolean = false;
       const is_admin: boolean = false;
       for (const group of facility_projects) {
         const dateCreated: moment.Moment = moment.unix(group['createdAt']);
         const dateDayDifference: number = Math.ceil(moment().diff(dateCreated, 'days', true));
         const groupid: string = group['id'];
-        const tmp_facility = group['compute_center'];
+
+        const currentCredits: number = Number(group['current_credits']);
+        const approvedCredits: number = Number(group['approved_credits']);
+        const tmp_facility: any = group['compute_center'];
         let shortname: string = group['shortname'];
         let compute_center: ComputecenterComponent = null;
         const lifetime: number = group['lifetime'];
@@ -166,7 +171,9 @@ export class FacilityProjectsOverviewComponent extends FilterBaseClass implement
           dateDayDifference,
           is_pi,
           is_admin,
-          compute_center);
+          compute_center,
+          currentCredits,
+          approvedCredits);
         newProject.Status = group['status'];
 
         if (lifetime !== -1) {
@@ -192,22 +199,18 @@ export class FacilityProjectsOverviewComponent extends FilterBaseClass implement
 
   }
 
-  sendMailToFacility(facility: string, subject: string, message: string, reply?: string): void {
+  sendMailToFacility(facility: string, subject: string, message: string, reply?: string, send?: any): void {
     this.facilityservice.sendMailToFacility(
       facility, encodeURIComponent(subject), encodeURIComponent(message), this.selectedProjectType,
-      encodeURIComponent(reply)).subscribe(
-      result => {
-        this.selectedProjectType = 'ALL';
-
+      encodeURIComponent(reply), send).subscribe(
+      (result: any) => {
         if (result.status === 201) {
           this.emailStatus = 1;
         } else {
           this.emailStatus = 2;
         }
       },
-      error => {
-        this.selectedProjectType = 'ALL';
-
+      () => {
         this.emailStatus = 2;
       })
 
@@ -215,7 +218,7 @@ export class FacilityProjectsOverviewComponent extends FilterBaseClass implement
 
   getMembesOfTheProject(projectid: number, projectname: string): void {
     this.facilityservice.getFacilityGroupRichMembers(projectid, this.selectedFacility['FacilityId'])
-      .subscribe(members => {
+      .subscribe((members: any) => {
                    this.usersModalProjectID = projectid;
                    this.usersModalProjectName = projectname;
                    this.usersModalProjectMembers = [];
@@ -224,7 +227,7 @@ export class FacilityProjectsOverviewComponent extends FilterBaseClass implement
                      const user_id: string = member['userId'];
                      const fullName: string = `${member['firstName']} ${member['lastName']}`;
                      const newMember: ProjectMember = new ProjectMember(user_id, fullName, member_id);
-                     newMember.ElixirId = member  ['elixirId'];
+                     newMember.ElixirId = member['elixirId'];
                      newMember.Email = member['email'];
                      this.usersModalProjectMembers.push(newMember);
                    }
@@ -239,12 +242,12 @@ export class FacilityProjectsOverviewComponent extends FilterBaseClass implement
   }
 
   public resetEmailModal(): void {
-
-    this.emailSubject = null;
+    this.selectedProjectType = 'ALL';
+    this.emailSubject = `[${this.selectedFacility['Facility']}]`;
     this.emailText = null;
     this.emailReply = null;
     this.emailStatus = 0;
-
+    this.sendNews = true;
   }
 
   public comingSoon(): void {

@@ -1,5 +1,5 @@
 <div class="table-responsive">
-  <table class="table table-striped">
+  <table class="table table-striped" style="table-layout: fixed">
 
 
     <tr *ngIf="application?.PIApproved">
@@ -58,14 +58,28 @@
       <td *ngIf="application?.Status == application_states.MODIFICATION_REQUESTED || isModification">
       </td>
     </tr>
+  </table>
+  <br>
+
+  <table class="table table-striped" style="table-layout: fixed">
+    <thead>
+    <tr>
+      <th colspan="2" style="text-align:center"><strong>Information</strong></th>
+      <th *ngIf="application?.Status == application_states.MODIFICATION_REQUESTED || isModification"></th>
+
+    </tr>
+    </thead>
+
     <tr>
       <td>Research Topics</td>
       <td><h5><span *ngFor="let term of application?.EdamTopics"
                     style="margin-left: 5px; "
-                    class="badge badge-info">{{term}}
+                    class="badge badge-info"><span id="topic_{{term}}">{{term}}</span>
  </span>
 
       </h5></td>
+      <td *ngIf="application?.Status == application_states.MODIFICATION_REQUESTED || isModification">
+
     </tr>
     <tr>
       <td>Description
@@ -101,14 +115,7 @@
       <td *ngIf="application?.Status == application_states.MODIFICATION_REQUESTED || isModification">
       </td>
     </tr>
-    <tr>
-      <td>Dissemination allowed</td>
-      <td>
-        {{application?.Dissemination}}
-      </td>
-      <td *ngIf="application?.Status == application_states.MODIFICATION_REQUESTED || isModification">
-      </td>
-    </tr>
+
 
     <tr>
       <td>Workgroup</td>
@@ -143,11 +150,56 @@
       </td>
     </tr>
     <tr>
-      <td><b>VMs</b>
+      <td>Sensitive Data</td>
+      <td><p *ngIf="application.SensitiveData"> Yes</p>
+        <p *ngIf="!application.SensitiveData"> No</p>
+      </td>
+      <td *ngIf="application?.Status == application_states.MODIFICATION_REQUESTED || isModification">
+
+      </td>
+    </tr>
+  </table>
+  <br>
+  <table class="table table-striped" style="table-layout: fixed">
+    <thead>
+    <tr>
+      <th colspan="2" style="text-align:center"><strong>Dissemination</strong></th>
+      <th *ngIf="application?.Status == application_states.MODIFICATION_REQUESTED || isModification"></th>
+
+    </tr>
+    </thead>
+    <tr>
+      <td>Platforms</td>
+      <td id="dissemination_platforms">
+        {{application?.Dissemination?.allowed_platforms}}
+      </td>
+      <td *ngIf="application?.Status == application_states.MODIFICATION_REQUESTED || isModification">
+      </td>
+    </tr>
+    <tr>
+      <td>Information</td>
+      <td id="dissemination_information">
+        {{application?.Dissemination?.allowed_informations}}
+      </td>
+      <td *ngIf="application?.Status == application_states.MODIFICATION_REQUESTED || isModification">
+      </td>
+    </tr>
+  </table>
+  <br>
+
+  <table class="table table-striped" style="table-layout: fixed">
+    <thead>
+    <tr>
+      <th colspan="2" style="text-align:center"><strong>Resources</strong></th>
+      <th *ngIf="application?.Status == application_states.MODIFICATION_REQUESTED || isModification"></th>
+
+    </tr>
+    </thead>
+    <tr>
+      <td>VMs
       </td>
 
       <td>
-        <span>Current:</span>
         {{application?.VMsRequested}}
       </td>
       <td *ngIf="application?.Status == application_states.MODIFICATION_REQUESTED || isModification">
@@ -205,6 +257,18 @@
         {{application?.ApplicationExtension?.TotalRAM}} GB
       </td>
     </tr>
+
+
+    <tr *ngIf="is_vo_admin">
+      <td>Credits</td>
+      <td>{{
+          application?.InitialCredits}}
+      </td>
+      <td *ngIf="application?.Status == application_states.MODIFICATION_REQUESTED || isModification">
+        {{application?.ApplicationExtension?.ExtendedCredits}} GB
+      </td>
+    </tr>
+
     <tr>
       <td>Storage Limit
       </td>

@@ -53,7 +53,7 @@
               <div class="col-md-8">
                 <select required class="form-control" name="projectSelect"
                         [(ngModel)]="selectedProject" id="projectSelect"
-                        (ngModelChange)="getSelectedProjectClient();"
+                        (ngModelChange)="getSelectedProjectClient(); resetChecks();"
                 >
                   <option value="undefined" disabled selected hidden> Please
                     Select
@@ -191,7 +191,6 @@
                              class="form-control"
                              type="text" placeholder="Instancename" [(ngModel)]="vm_name"
                              pattern="[a-zA-Z0-9]+"
-                             [ngModelOptions]="{updateOn: 'blur'}"
                              [ngClass]="{'is-invalid':f.controls.instance_name?.invalid && (f.controls.instance_name?.dirty || f.controls.instance_name?.touched),
                              'is-valid':f.controls.instance_name?.valid && (f.controls.instance_name?.dirty || f.controls.instance_name?.touched)}">
                     </div>
@@ -372,18 +371,17 @@
                   </div>
                   <div *ngIf="hasTools" class="col"
                        [ngClass]="{
-                                'alert-danger': !respCheck.checked,
-                                'alert-success': respCheck.checked
+                                'alert-danger': !gaveOkay,
+                                'alert-success': gaveOkay
                                 }">
                     <div class="form-check">
                       <input class="form-check-input"
                              name="bioconda_need_okay"
                              type="checkbox"
                              id="bioconda_need_okay"
-                             ngModel
+                             [(ngModel)]="gaveOkay"
                              #respCheck
                              required
-                             (click)="setGaveOkay(respCheck.checked)"
                       >
                       <label class="form-check-label" for="bioconda_need_okay">
                         I hereby confirm that I read and acknowledge the following:<br>
@@ -407,7 +405,7 @@
         </div>
 
         <div
-          *ngIf="(!vm_name || (!gaveOkay && hasTools) || !selectedImage || !selectedFlavor || (diskspace > 0 && !volumeName))&& projectDataLoaded  && flavors_loaded  && selectedProjectVmsUsed < selectedProjectVmsMax"
+          *ngIf="(!vm_name || (!gaveOkay && hasTools) || !selectedImage || (!selectedFlavor && flavors.length != 0 ) || (diskspace > 0 && !volumeName))&& projectDataLoaded  && flavors_loaded  && selectedProjectVmsUsed < selectedProjectVmsMax"
           class="alert alert-danger" role="alert" style="max-width: 600px;margin: 0 auto;">
           <p>Please choose the following before starting a VM:</p>
           <p *ngIf="!vm_name">- A name for your instance

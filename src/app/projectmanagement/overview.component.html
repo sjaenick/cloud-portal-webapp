@@ -44,6 +44,7 @@
                 <th>Date created (d/m/y)</th>
                 <th>Expiration Date (d/m/y)</th>
                 <th>Days running</th>
+                <th *ngIf="is_vo_admin">Current Credits</th>
                 <th>Lifetime in Days</th>
                 <th>Facility</th>
 
@@ -66,6 +67,7 @@
                 <td>{{ project?.DateCreated }}</td>
                 <td>{{project?.DateEnd}}</td>
                 <td>{{ project?.DaysRunning }}</td>
+                <th *ngIf="is_vo_admin">{{project?.CurrentCredits}}/{{project?.ApprovedCredits}}</th>
                 <td>{{project?.LifetimeDays}}</td>
 
                 <td>
@@ -97,10 +99,10 @@
         </div>
         <div class="card-body">
           <div class="btn-group col-12">
-            <button
-              (click)="application_details_visible=!application_details_visible;getFacilityProject();"
-              type="button"
-              class="btn btn-info" style="margin-bottom:5px;margin-right:5px">
+            <button id="show_information_btn"
+                    (click)="application_details_visible=!application_details_visible;getFacilityProject();"
+                    type="button"
+                    class="btn btn-info" style="margin-bottom:5px;margin-right:5px">
               <i class="fa fa-info-circle"></i>&nbsp;
               <span
                 [hidden]="application_details_visible">Show</span><span
@@ -346,11 +348,11 @@
               </thead>
               <tbody *ngFor="  let member of filteredMembers">
               <td>
-                <button
-                  (click)="addMember(project?.Id,member['member_id'],member['firstName'],member['lastName']);filteredMembers=null; addUserModal.hide();notificationModal.show();"
-                  class="btn btn-success" id="add_member_btn"><i class="fa fa-plus"></i> Add Member
+                <button style="padding: 5px; margin: 5px"
+                        (click)="addMember(project?.Id,member['member_id'],member['firstName'],member['lastName']);filteredMembers=null; addUserModal.hide();notificationModal.show();"
+                        class="btn btn-success" id="add_member_btn"><i class="fa fa-plus"></i> Add Member
                 </button>
-                <button style="padding-left: 10px;margin-left: 10px"
+                <button style="padding: 5px; margin: 5px"
                         (click)="addAdmin(project?.Id,member['member_id'],member['user_id'],member['firstName'],member['lastName']);filteredMembers=null; addUserModal.hide();notificationModal.show();"
                         class="btn btn-primary"><i class="fa fa-plus"></i> Add Admin
                 </button>
@@ -1013,7 +1015,9 @@
           These numbers <strong>will not be added</strong> to your current numbers, but
           will <strong>replace them</strong>.
           <br><br>
+
           <strong>Choosing 0 additional months will only change the requested resources and will not prolong your project lifetime.</strong>
+
         </div>
         <form id="application_form" #f="ngForm" (ngSubmit)="onSubmit(f)"
               class="form-horizontal">
@@ -1106,6 +1110,7 @@
                                name="project_application_renewal_{{fl.name}}"
                                type="number" min="0" step="1"
                                placeholder="e.g 1"
+                               (ngModelChange)="onChangeFlavor($event)"
                                [ngModel]="project_application?.CurrentFlavors[fl.name]?.counter"
                                #name="ngModel"
                                appMinAmount="0" appIntegerOrNull
@@ -1279,10 +1284,24 @@
 
 
         </form>
-        <div *ngIf="f.invalid" class=" form-group row alert alert-warning">
-          Some required fields are incorrect or not filled in yet.
-          Please check if all required (*) fields are filled in correctly.
-
+        <div *ngIf="f.invalid" class="alert alert-warning" role="alert">
+          <p>Some required fields are incorrect or not filled in yet.
+            Please check if all required (*) fields are filled in correctly.</p>
+          <p *ngIf="f.controls.project_application_renewal_lifetime?.invalid">
+            - Lifetime missing
+          </p>
+          <p *ngIf="f.controls.project_application_renewal_volume_counter?.invalid">
+            - Number of storage volumes missing
+          </p>
+          <p *ngIf="f.controls.project_application_renewal_volume_limit?.invalid">
+            - Storage Limit missing
+          </p>
+          <p *ngIf="f.controls.project_application_renewal_object_storage?.invalid">
+            - Object Storage missing
+          </p>
+          <p *ngIf="!min_vm">
+            - Select at least one Flavor
+          </p>
         </div>
 
 
@@ -1292,7 +1311,7 @@
           </div>
           <button type="button" class="btn  btn-primary"
                   form="application_form" id="submit_renewal_btn"
-                  (click)="extension_request=true;filterEnteredData(f); submitModal.show();"
+                  (click)="extension_request=true;filterEnteredData(f);calculateInitialCredits(f); submitModal.show();"
                   [disabled]="f.invalid"><i
             class="fa fa-dot-circle-o">
 
