@@ -7,6 +7,7 @@ import {VolumeOverviewComponent} from './volumes/volumeOverview.component';
 import {SnapshotOverviewComponent} from './snapshots/snapshotOverview.component';
 import {VmDetailComponent} from './vmdetail.component';
 import {AddClusterComponent} from './clusters/add-cluster/add-cluster.component';
+import {Guidance2Component} from './guidance/guidance2.component';
 
 const routes: Routes = [
     {
@@ -17,6 +18,13 @@ const routes: Routes = [
         }
 
     },
+  {
+    path: 'vmGuidance',
+    component: Guidance2Component,
+    data: {
+      title: 'Guidance'
+    }
+  },
   {
         path: 'newCluster',
         component: AddClusterComponent,

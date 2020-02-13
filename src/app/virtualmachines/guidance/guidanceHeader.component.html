@@ -1,0 +1,40 @@
+<div class="card">
+  <div class="card-body">
+    <div class="row">
+      <div  class="col-6">
+        <div class="row justify-content-center">
+          Do you want to learn more about virtual machines and how to use them?
+        </div>
+        <div class="row justify-content-center">
+          <button class="btn btn-success">Click here!</button>
+        </div>
+      </div>
+      <div class="col-6">
+        <owl-carousel-o [options]="customOptions">
+          <ng-template carouselSlide>
+            <div class="card flavor-image-card">
+              <div class="card-body scroll-flavor">
+                Want to know how to share files? <a>Click here!</a>
+              </div>
+            </div>
+          </ng-template>
+          <ng-template carouselSlide>
+            <div class="card flavor-image-card">
+              <div class="card-body scroll-flavor">
+                Want to know how to not share files? <a>Click here!</a>
+              </div>
+            </div>
+          </ng-template>
+          <ng-template carouselSlide>
+            <div class="card flavor-image-card">
+              <div class="card-body scroll-flavor">
+                Want to know to start a party? <a href="https://cloud.denbi.de/wiki/">Click here!</a>
+              </div>
+            </div>
+          </ng-template>
+
+        </owl-carousel-o>
+      </div>
+    </div>
+  </div>
+</div>
