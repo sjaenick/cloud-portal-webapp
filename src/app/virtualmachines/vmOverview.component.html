@@ -179,7 +179,9 @@
                   </div>
                   <div *ngIf="vm?.res_env_url" class="col-md-1">
                       <span class="fas fa-globe" style="font-size: 18px; cursor: pointer;" data-toggle="tooltip" data-placement="right"
-                         title="{{'Research Environment installed: ' + resenvInformationByVM[vm.name]}}"
+                            [title]="vm.status === VirtualMachineStates.staticACTIVE
+                            ? 'Research Environment installed: ' + resenvInformationByVM[vm]
+                            : 'Start VM to use ' + resenvInformationByVM[vm]"
                             (click)="this.copyToClipboard(vm?.res_env_url); this.showCopiedMessage(vm.name);">
                           <span class="badge badge-pill badge-secondary" id="{{vm.name + 'resenvSpan'}}"
                               style="font-size: 10px; position: relative; top: -12px; left: -10px;">
