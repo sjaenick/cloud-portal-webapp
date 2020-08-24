@@ -828,7 +828,7 @@ export class OverviewComponent extends ApplicationBaseClassComponent implements 
 
   }
 
-  setSupportMails(project: Project){
+  setSupportMails(project: Project) {
     this.supportMails = project.ComputeCenter.Support.toString().split(',');
   }
 
